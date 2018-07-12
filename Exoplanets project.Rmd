@@ -31,9 +31,11 @@ to our analysis, so I decided to keep the null values.
 
 # The other parameters for "message" and "warning" should also be set to FALSE
 # for other code chunks once you have verified that each plot comes out as you
-# want it to. This will clean up the flow of your report.
+# want it to. This will clean up the flow of your report
+
 
 library(tidyverse)
+
 
 ```
 
@@ -85,9 +87,6 @@ ep$st_spster <- substring(ep$st_spster, 1, 1)
 ep$st_spster %>% factor(levels = c('A', 'B', 'F', 'G', 'K', 'L', 'M', 'S',
                                    'T', 'W'))
 
-ggplot(subset(ep, ep$st_spster != ''), aes(x = st_spster)) +
-  geom_histogram(stat = 'count')
-
 # Here we essentially exclude all planets that are not the "final" planet in
 # their system, and use this dataframe to keep track of the number of planets
 # in each system
@@ -117,12 +116,7 @@ hist_plot <- function(df, x, binwidth) {
 ```
 
 
-```{r echo=FALSE, Load_the_Data}
-# Read in data and drop useless first column
-ep <- read.csv('planets_clean.csv', sep = ',')
-ep <- ep[, 2:dim(ep)[2]]
-getwd()
-```
+
 
 
 ```{r echo=FALSE, Summarize_dataframe}
@@ -186,7 +180,7 @@ stars more, making it easier to discover more massive planets with this method?
 
 ```{r echo=FALSE, planet_mass}
 
-hist_plot(ep, ep$pl_bmassj, .1)
+hist_plot(ep, ep$pl_bmassj, .5)
 
 ```
 
@@ -242,7 +236,7 @@ im <- ep %>% subset(pl_discmethod == 'Imaging')
 
 ```{r}
 
-hist_plot(trans, trans$pl_bmassj, .1) + xlab('Jupiter Masses')
+hist_plot(trans, trans$pl_bmassj, .3) + xlab('Jupiter Masses')
 
 ```
 
@@ -251,7 +245,7 @@ below 2.5 Jupiter masses, with relatively low variance.
 
 ```{r}
 
-hist_plot(rv, rv$pl_bmassj, .1) + xlab('Jupiter Masses')
+hist_plot(rv, rv$pl_bmassj, .3) + xlab('Jupiter Masses')
 
 ```
 
@@ -271,7 +265,7 @@ discovered via microlensing have more than 2.5 Jupiter masses.
 
 ```{r}
 
-hist_plot(im, im$pl_bmassj, .1) + xlab('Jupiter Masses')
+hist_plot(im, im$pl_bmassj, .3) + xlab('Jupiter Masses')
 
 ```
 
@@ -303,12 +297,9 @@ hist_plot(trans, trans$pl_radj, .1) + xlab('Jupiter Radii')
 below 2 Jupiter radii, whereas the planets discovered via imaging have multiple
 data points greater than 3 radii.
 
-```{r}
-summary(ep$pl_pnum)
-```
-```{r echo=FALSE, Su}
+```{r echo=FALSE, num_planets}
 summary(num_planets)
-ggplot(num_planets, aes(x = pl_letter)) + geom_bar()
+ggplot(num_planets, aes(x = factor(pl_pnum))) + geom_bar()
 
 
 ```
@@ -338,6 +329,21 @@ over 4 billion years, the interquartile range is 3 to 4.725 billion years. The
 minimum is .001 billion years and the max is 12.5 billion years. This means
 we have discovered planets orbiting both extremely young and extremely old
 stars, but most are orbiting stars whose age lies somewhere in between. 
+
+```{r}
+
+hist_plot(ep, ep$st_mass, 1)
+
+```
+
+
+```{r}
+
+hist_plot(ep, ep$st_mass, .1) + coord_cartesian(xlim = c(0, 5))
+
+```
+> The stars in our dataset form an almost normal distribution around 1 solar
+mass, with very slight skew to the right. 
 
 ```{r}
 
@@ -469,6 +475,32 @@ when the host star is far away.
 
 ```{r}
 
+ggplot(ep, aes(x = st_dist, y = pl_bmassj)) + geom_point()
+
+```
+
+
+```{r}
+
+ggplot(subset(ep, ep$st_spster == 'F' | ep$st_spster == 'G' |
+                ep$st_spster == 'K' | ep$st_spster == 'M'), 
+              aes(x = st_spster, y = st_dist)) + geom_boxplot() + 
+  coord_cartesian(ylim = c(0, 1000))
+
+```
+
+> All stars with planets around them have an interquartile range near 0 with
+respect to distance from Earth. It seems that more planets have been discovered
+orbiting stars near Earth than far from Earth across the four most common
+star classifications in our dataset. All stellar classifications have a third 
+quartile at or less than 250 light years.
+
+```{r}
+
+names(ep)
+
+ggplot(ep, aes(x = st_mass, y = pl_bmassj)) + geom_point() +
+  coord_cartesian(xlim = c(0, 15), ylim = c(0, 30))
 
 ```
 
@@ -503,10 +535,18 @@ will do that.
 
 ```{r}
 
-ggplot(ep, aes(x = st_dist, y = pl_bmassj, color = pl_discmethod))
-+ geom_point()
+ggplot(ep, aes(x = st_dist, y = pl_bmassj, color = pl_discmethod)) +
+  geom_point(alpha = 0.2) + scale_color_brewer(type='qual', palette = 2)
 
 ```
+> This plot has some fascinating qualities! Almost every single planet 
+discovered more than 3000 light years away was discovered through microlensing!
+Radial velocity seems to be the most common discovery method for relatively 
+close planets (and seems to have no problem discovering high mass planets), 
+while the transit method seems to easily discover planets a little further away,
+but less than 2000 light years away. Planets discovered via transit also seem to
+have lower mass than planets discovered via radial velocity. Planets discovered
+via imaging are generally very near earth, and can have relatively high mass.
 
 # Multivariate Analysis
 
