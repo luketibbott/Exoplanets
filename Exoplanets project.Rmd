@@ -510,9 +510,21 @@ ggplot(ep, aes(x = st_mass, y = pl_bmassj)) + geom_point() +
 > **Tip**: As before, summarize what you found in your bivariate explorations
 here. Use the questions below to guide your discussion.
 
+
+
 ### Talk about some of the relationships you observed in this part of the \
 investigation. How did the feature(s) of interest vary with other features in \
 the dataset?
+
+> The relationship between planetary mass and planetary radius, as well as
+between planetary mass and planetary density is not as positievly correlated as expected. One would expect a strong correlation in both scenarios, but there is
+something going on in mass, radius, and density preventing this. It definitely
+warrants further investigation. Adding additional variables might definitively
+explain this.
+
+> There's a weak negative correlation between star distance from earth and 
+planetary mass. I'd expect this to be explained by bias in different discovery methods. Perhaps the methods that are capable of discovering planets very far
+from earth are biased towards discovering lower mass planets.
 
 ### Did you observe any interesting relationships between the other features \
 (not the main feature(s) of interest)?
