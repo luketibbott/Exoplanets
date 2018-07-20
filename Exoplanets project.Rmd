@@ -121,6 +121,14 @@ hist_plot <- function(df, x, binwidth) {
   ggplot(df, aes(x = x)) + geom_histogram(binwidth=binwidth)
 }
 
+# Produces a scatter plot using ggplot2.
+# Arguments: df, a dataframe object; x, a variable in df, y a variable in df;
+
+
+scatter <- function(df, x, y) {
+  ggplot(df, aes(x = x, y = y)) + geom_point()
+}
+
 ```
 
 
@@ -140,9 +148,10 @@ str(ep)
 # Univariate Plots Section
 
 ```{r echo=FALSE, Univariate_Plots}
+
 ggplot(ep, aes(x = pl_discmethod)) + geom_bar() + 
-  theme(axis.text.x =  element_text(angle = 70, size = 8, hjust = 1)) +
-  scale_y_sqrt()
+  theme(axis.text.x =  element_text(angle = 70, size = 8, hjust = 1))
+
 ```
 
 This bar chart shows us that transit and radial velocity methods of discovery
@@ -353,11 +362,11 @@ hist_plot(ep, ep$st_mass, 1)
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 
-hist_plot(ep, ep$st_mass, .1) + coord_cartesian(xlim = c(0, 5))
+hist_plot(ep, ep$st_mass, .1) + coord_cartesian(xlim = c(0, 5)) + 
+  xlab('Solar masses')
 
 ```
-The stars in our dataset form an almost normal distribution around 1 solar
-mass, with very slight skew to the right. 
+The stars in our dataset form a normal distribution around 1 solar mass.
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 
@@ -386,13 +395,6 @@ hist_plot(ep, ep$st_teff, 100) + xlab('Effective temperature (K)')
 
 ```
 
-
-```{r echo=FALSE, warning=FALSE, message=FALSE}
-
-ggplot(ep, aes(x = st_teff)) + geom_histogram(binwidth = 100) +
-  xlab('Effective temperature (K)') + coord_cartesian(xlim = c(0, 10000))
-
-```
 
 Effective temperature of stars in our dataset form an approximately normal
 distribution around 6000 K, with a slight skew to the left.
@@ -467,6 +469,9 @@ discover than smaller planets.
 
 ggplot(subset(ep, ep$pl_dens <= 60), aes(x = pl_dens, y = pl_bmassj)) + 
   geom_point()
+
+scatter(ep, ep$pl_dens, ep$pl_bmassj) +
+  coord_cartesian(xlim = c(0, 20), ylim = c(0, 10))
 
 ```
 
