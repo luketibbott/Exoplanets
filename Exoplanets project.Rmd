@@ -4,11 +4,12 @@ Exploratory Data Analysis of Known Exoplanets by Luke Tibbott
 
 
 
-> This data set was retrieved from the NASA Exoplanet Archive. An exoplanet is an extrasolar planet -- that is, a planet that exists outside of earth's solar 
+This data set was retrieved from the NASA Exoplanet Archive. An exoplanet is an
+extrasolar planet -- that is, a planet that exists outside of earth's solar 
 system. The original data set has been pared down to 15 columns from 200+
 columns. 
 
-> When cleaning this dataset I was confronted with the issue of what to do with
+When cleaning this dataset I was confronted with the issue of what to do with
 the large amount of null values in certain columns. Removing all the rows with 
 nulls results in a tiny dataset, and imputing the values is very dangerous due
 to the possibility of assigning incorrect values. Most null values are due to 
@@ -40,7 +41,7 @@ library(tidyverse)
 ```
 
 ```{r echo=FALSE, Data_cleaning}
-# Read in datat to a dataframe object
+# Read in data to a dataframe object
 df <- read.csv('planets.csv', header=TRUE)
 
 # Grab columns 2 through 20
@@ -54,6 +55,7 @@ pa$st_age <- df$st_age
 pa$st_mass <- df$st_mass
 pa$st_dist <- df$st_dist
 pa$st_teff <- df$st_teff
+pa$pl_bmasse <- df$pl_bmasse
 
 # Drop columns we don't care about
 ep <- pa[ , -which(names(pa) %in% c('pl_orbeccen', 'pl_orbincl', 
@@ -61,6 +63,7 @@ ep <- pa[ , -which(names(pa) %in% c('pl_orbeccen', 'pl_orbincl',
                                     'pl_k2flag', 'pl_nnotes',
                                     'ra', 'dec_str', 'pl_bmassprov',
                                     'ra_str'))]
+
 
 ```
 
@@ -84,8 +87,9 @@ ep$pl_discmethod <- factor(ep$pl_discmethod, levels =
 ep$st_spster <- substring(ep$st_spster, 1, 1)
 
 # Factor spectral type column to ensure ggplot plays nice with it
-ep$st_spster %>% factor(levels = c('A', 'B', 'F', 'G', 'K', 'L', 'M', 'S',
-                                   'T', 'W'))
+ep$st_spster <- factor(ep$st_spster, 
+                       levels = c('A', 'B', 'F', 'G', 'K', 'L', 'M', 'S', 
+                                  'T', 'W'))
 
 # Here we essentially exclude all planets that are not the "final" planet in
 # their system, and use this dataframe to keep track of the number of planets
@@ -99,8 +103,8 @@ num_planets = subset(ep, (ep$pl_letter == 'b' & ep$pl_pnum == 1) |
                        (ep$pl_letter == 'h' & ep$pl_pnum == 7) | 
                        (ep$pl_letter == 'i' & ep$pl_pnum == 8))
 
-backup <- ep
-
+# Subset the dataframe to ignore less common discovery methods which account for
+# a very small portion of the dataset
 ep <- subset(ep, pl_discmethod == 'Transit' | pl_discmethod == 'Radial Velocity' | 
            pl_discmethod == 'Microlensing' | pl_discmethod == 'Imaging')
 
@@ -109,9 +113,9 @@ ep <- subset(ep, pl_discmethod == 'Transit' | pl_discmethod == 'Radial Velocity'
 
 
 ```{r echo=FALSE, Functions}
-#' Produces a histogram plot using ggplot2.
-#' Arguments: df, a dataframe object; x, a variable in df;
-#' binwidth, width of the bars in the histogram
+# Produces a histogram plot using ggplot2.
+# Arguments: df, a dataframe object; x, a variable in df;
+# binwidth, width of the bars in the histogram
 
 hist_plot <- function(df, x, binwidth) {
   ggplot(df, aes(x = x)) + geom_histogram(binwidth=binwidth)
@@ -135,20 +139,13 @@ str(ep)
 
 # Univariate Plots Section
 
-> **Tip**: In this section, you should perform some preliminary exploration of
-your dataset. Run some summaries of the data and create univariate plots to
-understand the structure of the individual variables in your dataset. Don't
-forget to add a comment after each plot or closely-related group of plots!
-There should be multiple code chunks and text sections; the first one below is
-just to help you get started.
-
 ```{r echo=FALSE, Univariate_Plots}
 ggplot(ep, aes(x = pl_discmethod)) + geom_bar() + 
   theme(axis.text.x =  element_text(angle = 70, size = 8, hjust = 1)) +
   scale_y_sqrt()
 ```
 
-> This bar chart shows us that transit and radial velocity methods of discovery
+This bar chart shows us that transit and radial velocity methods of discovery
 are far and way the most popular methods for discovering exoplanets.
 Each of the other methods account for a very small proportion of all discovered
 exoplanets.
@@ -178,17 +175,15 @@ stars more, making it easier to discover more massive planets with this method?
  analysis.
 
 
-```{r echo=FALSE, Univariate_Plots}
-```
 
 
-```{r echo=FALSE, planet_mass}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 
 hist_plot(ep, ep$pl_bmassj, .5)
 
 ```
 
-> These plots show us that a large number of the planets are very close to
+This plot shows us that a large number of planets are very close to
 0 Jupiter masses (although none of them are exactly 0). This would lead me to
 believe these planets are not gas giants with huge mass and huge radius, but
 perhaps small, rocky planets. I would guess the planets with higher mass are gas
@@ -196,25 +191,24 @@ giants. We can take a look at planet radius later on to see if these planets'
 radii match up with the large numbers we'd expect from gas giants.
 
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 
-hist_plot(ep, ep$pl_bmassj, .5) + coord_cartesian(xlim = c(0, 30)) +
-scale_y_log10() + xlab('Jupiter Masses')
-
+hist_plot(ep, ep$pl_bmassj, .25) + coord_cartesian(xlim = c(0, 10)) + 
+  scale_y_log10() + xlab('Jupiter Masses')
 
 ```
 
-> The log-10 adjusted graph gives us a better idea of how planetary mass
+The log-10 adjusted graph gives us a better idea of how planetary mass
 is distributed near 0 Jupiter masses. Again, we see a heavily right skewed
 distribution. 
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 
 hist_plot(ep, ep$pl_radj, .1) + xlab('Jupiter Radii')
 
 ```
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 
 hist_plot(ep, ep$pl_radj, .1) + xlab('Jupiter radii') + 
   coord_cartesian(xlim = c(0, 2.5))
@@ -222,18 +216,18 @@ hist_plot(ep, ep$pl_radj, .1) + xlab('Jupiter radii') +
 ```
 
 
-> Most of the planets are less than .25 Jupiter radii, but there is a small
+Most of the planets are less than .25 Jupiter radii, but there is a small
 peak a little over 1 Jupiter radius. I expected the planets' radii to be be much
 higher after seeing the mass plot. This makes me think that many of the planets
 have a high density.
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 
 hist_plot(ep, ep$pl_dens, 1) + xlab('Density, g / cm^3')
 
 ```
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 
 hist_plot(ep, ep$pl_dens, .5) + xlab('Density, g / cm^3') + 
 coord_cartesian(xlim = c(0, 20))
@@ -241,11 +235,11 @@ coord_cartesian(xlim = c(0, 20))
 ```
 
 
-> As suspected, we do see a bit more variance in density, but the relationship
+As suspected, we do see a bit more variance in density, but the relationship
 between mass, radius, and density needs to be investigated more. Unfortunately
 we have significantly less data on density than on mass and radius.
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 
 trans <- ep %>% subset(pl_discmethod == 'Transit')
 rv <- ep %>% subset(pl_discmethod == 'Radial Velocity')
@@ -255,81 +249,80 @@ im <- ep %>% subset(pl_discmethod == 'Imaging')
 ```
 
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 
 hist_plot(trans, trans$pl_bmassj, .3) + xlab('Jupiter Masses')
 
 ```
 
-> The mass of planets discovered via the transit method is heavily concentrated
+The mass of planets discovered via the transit method is heavily concentrated
 below 2.5 Jupiter masses, with relatively low variance.
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 
 hist_plot(rv, rv$pl_bmassj, .3) + xlab('Jupiter Masses')
 
 ```
 
-> Planets discovered via the radial velocity method have a distribution very
+Planets discovered via the radial velocity method have a distribution very
 similar to those discovered via transit.
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 
 hist_plot(ml, ml$pl_bmassj, .1) + xlab('Jupiter Masses')
 
 ```
 
-> We have very few data points for planets discovered via microlensing, but 
+We have very few data points for planets discovered via microlensing, but 
 this distribution has much higher variance. Most planets discovered via
 microlensing have relatively low mass, but a significant proportion of planets
 discovered via microlensing have more than 2.5 Jupiter masses.
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 
 hist_plot(im, im$pl_bmassj, .3) + xlab('Jupiter Masses')
 
 ```
 
-> We have even less data for planets discovered via imaging, but this 
+We have even less data for planets discovered via imaging, but this 
 distribution is the only one we've seen that isn't clustered near 0 Jupiter 
 masses. I would guess that it's easier to discover more massive planets via 
 imaging because they are bigger and easier to see. Let's take a look at
 the radius of planets discovered via imaging to confirm that they are bigger:
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 hist_plot(im, im$pl_radj, .1) + xlab('Jupiter Radii')
 ```
 
-> These radii aren't as big as I expected, but let's take a look at the Radial
+These radii aren't as big as I expected, but let's take a look at the Radial
 Velocity and Transit radii to see how they compare:
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 hist_plot(rv, rv$pl_radj, .1) + xlab('Jupiter Radii')
 ```
 
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 
 hist_plot(trans, trans$pl_radj, .1) + xlab('Jupiter Radii')
 
 ```
 
-> The radii of planets discovered via transit or radial velocity are generally
+The radii of planets discovered via transit or radial velocity are generally
 below 2 Jupiter radii, whereas the planets discovered via imaging have multiple
 data points greater than 3 radii.
 
 ```{r echo=FALSE, num_planets}
-summary(num_planets)
 ggplot(num_planets, aes(x = factor(pl_pnum))) + geom_bar()
 
 
 ```
 
-> Most planetary systems we've discovered have 
+Most planetary systems we've discovered have 
 only one planet. I'm interested to see if certain discovery methods lend
 themselves to discovering systems with more or less planets in them.
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 
 hist_plot(ep, ep$st_age, .1) + xlab('Star age (billions of years)')
 
@@ -337,7 +330,7 @@ hist_plot(ep, ep$st_age, .1) + xlab('Star age (billions of years)')
 
 
 
-> The distribution of parent stars is certainly unimodal although perhaps not
+The distribution of parent stars is certainly unimodal although perhaps not
 quite normal, with a clear peak a bit older than 4 billion years old, and a
 higher concentration of stars between 0 and 4.5 billion years old than stars 
 between 4.5 and 12 billion years old. This could indicate a number of things,
@@ -345,76 +338,67 @@ including our current detection methods being biased towards finding planets
 orbiting younger stars, or perhaps younger stars are more likely to host
 planets.
 
-> A five-number summary of star age shows us the median and mean are both just
+A five-number summary of star age shows us the median and mean are both just
 over 4 billion years, the interquartile range is 3 to 4.725 billion years. The 
 minimum is .001 billion years and the max is 12.5 billion years. This means
 we have discovered planets orbiting both extremely young and extremely old
 stars, but most are orbiting stars whose age lies somewhere in between. 
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 
 hist_plot(ep, ep$st_mass, 1)
 
 ```
 
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 
 hist_plot(ep, ep$st_mass, .1) + coord_cartesian(xlim = c(0, 5))
 
 ```
-> The stars in our dataset form an almost normal distribution around 1 solar
+The stars in our dataset form an almost normal distribution around 1 solar
 mass, with very slight skew to the right. 
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 
 ggplot(subset(ep, ep$st_spster != ''), aes(x = st_spster)) +
   geom_bar()
 
 ```
-> Most stars with exoplanets orbiting them can be lumped in to one of four
+Most stars with exoplanets orbiting them can be lumped in to one of four
 stellar classifications: F, G, K, or M.
 
-> Interestingly, the most common stellar
+Interestingly, the most common stellar
 classification is G, which is the same classification as our own sun.
 
-> Class M stars are the most common stars in the universe, so it is not
+Class M stars are the most common stars in the universe, so it is not
 surprising that many stars in our dataset are class M -- although it is
 worth noting that despite class M stars prevalence in the universe, they are not
 the most common stars that host exoplanets (that we've discovered). 
 
-> Class K stars are an intermediary class between G and M stars.
+Class K stars are an intermediary class between G and M stars.
 
-> Class F stars are similar in mass to the Sun, but emit more UV radiation. 
+Class F stars are similar in mass to the Sun, but emit more UV radiation. 
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 
 hist_plot(ep, ep$st_teff, 100) + xlab('Effective temperature (K)')
 
 ```
 
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 
 ggplot(ep, aes(x = st_teff)) + geom_histogram(binwidth = 100) +
   xlab('Effective temperature (K)') + coord_cartesian(xlim = c(0, 10000))
 
 ```
 
-> Effective temperature of stars in our dataset form an approximately normal
+Effective temperature of stars in our dataset form an approximately normal
 distribution around 6000 K, with a slight skew to the left.
 
-> **Tip**: Make sure that you leave a blank line between the start / end of
-each code block and the end / start of your Markdown text so that it is
-formatted nicely in the knitted text. Note as well that text on consecutive
-lines is treated as a single space. Make sure you have a blank line between
-your paragraphs so that they too are formatted for easy readability.
 
 # Univariate Analysis
-
-> **Tip**: Now that you've completed your univariate explorations, it's time to
-reflect on and summarize what you've found. Use the questions below to help you
-gather your observations and add your own if you have other thoughts!
 
 ### What is the structure of your dataset?
 
@@ -479,20 +463,14 @@ discover than smaller planets.
 
 # Bivariate Plots Section
 
-> **Tip**: Based on what you saw in the univariate plots, what relationships
-between variables might be interesting to look at in this section? Don't limit
-yourself to relationships between a main output feature and one of the
-supporting variables. Try to look at relationships between supporting variables
-as well.
-
-```{r echo=FALSE, Bivariate_Plots}
+```{r echo=FALSE, warning=FALSE, message=FALSE, Bivariate_Plots}
 
 ggplot(subset(ep, ep$pl_dens <= 60), aes(x = pl_dens, y = pl_bmassj)) + 
   geom_point()
 
 ```
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 
 ggplot(subset(ep, ep$pl_dens <= 60), aes(x = pl_dens, y = pl_bmassj)) + 
   geom_point() + coord_cartesian(xlim = c(0, 15), ylim = c(0, 5))
@@ -500,28 +478,28 @@ ggplot(subset(ep, ep$pl_dens <= 60), aes(x = pl_dens, y = pl_bmassj)) +
 ```
 
 
-> The line of points hugging 0 mass with density between 0 and 15 g/cm^3 is 
+The line of points hugging 0 mass with density between 0 and 15 g/cm^3 is 
 most likely representing terrestrial planets. These planets would have high
 density due to their rocky composition, but low mass due to size limits (a 
 terrestrial planet has a theoretical size limit of about 2 *Earth* radii
 according to Wikipedia). The second plot clearly shows two different groups of
 planets.
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 
 ggplot(ep, aes(x = pl_radj, y = pl_bmassj)) + geom_point() +
   coord_cartesian(xlim = c(0, 3), ylim =c(0, 30))
 
 ```
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 
 ggplot(ep, aes(x = pl_radj, y = pl_bmassj)) + geom_point() +
   coord_cartesian(xlim = c(0, 3), ylim =c(0, 10))
 
 ```
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 
 ggplot(ep, aes(x = pl_orbsmax, y = pl_bmassj)) + geom_point() +
   coord_cartesian(xlim = c(0, 8), ylim = c(0, 10))
@@ -529,30 +507,30 @@ ggplot(ep, aes(x = pl_orbsmax, y = pl_bmassj)) + geom_point() +
 ```
 
 
-> There's no obvious correlation between a planet's max orbit and a planet's
+There's no obvious correlation between a planet's max orbit and a planet's
 mass, but there is an interesting vertical line very close to 0 astronomical
 units. These are likely gas planets orbiting very close to their star (known as
 hot Jupiters).
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 
 ggplot(ep, aes(x = st_dist, y = pl_bmassj)) + geom_point()
 
 ```
 
-> There appears to be a weak negative correlation between star distance and 
+There appears to be a weak negative correlation between star distance and 
 planet mass. This is somewhat counterintuitive because I would expect higher
 mass planets to be easier to discover than low mass planets particularly
 when the host star is far away.
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 
 ggplot(ep, aes(x = st_dist, y = pl_bmassj)) + geom_point()
 
 ```
 
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 
 ggplot(subset(ep, ep$st_spster == 'F' | ep$st_spster == 'G' |
                 ep$st_spster == 'K' | ep$st_spster == 'M'), 
@@ -561,40 +539,40 @@ ggplot(subset(ep, ep$st_spster == 'F' | ep$st_spster == 'G' |
 
 ```
 
-> All stars with planets around them have an interquartile range near 0 with
+All stars with planets around them have an interquartile range near 0 with
 respect to distance from Earth. It seems that more planets have been discovered
 orbiting stars near Earth than far from Earth across the four most common
 star classifications in our dataset. All stellar classifications have a third 
 quartile at or less than 250 light years.
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 
 ggplot(ep, aes(x = st_mass, y = pl_bmassj)) + geom_point() +
   coord_cartesian(xlim = c(0, 15), ylim = c(0, 30))
 
 ```
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 
 ggplot(ep, aes(x = st_mass, y = pl_bmassj)) + geom_point(alpha=0.5) +
   coord_cartesian(xlim = c(0, 2), ylim = c(0, 5))
 
 ```
 
-> Most stars have mass around 1 solar mass or less. Planetary mass does not
+Most stars have mass around 1 solar mass or less. Planetary mass does not
 appear to be correlated to star mass.
 
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 
 ggplot(num_planets, aes(x = factor(pl_pnum), y = st_mass)) + geom_boxplot() +
   coord_cartesian(ylim = c(0, 2.5))
 
 ```
-> There doesn't appear to be any significant difference in the mass of a star
+There doesn't appear to be any significant difference in the mass of a star
 when compared to the number of planets orbiting a star.
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 
 ggplot(subset(ep, ep$st_spster != 'W' & ep$st_spster != 's' &
                 ep$st_spster != 'L' & ep$st_spster != 'B' & ep$st_spster != ''), 
@@ -603,10 +581,10 @@ ggplot(subset(ep, ep$st_spster != 'W' & ep$st_spster != 's' &
 
 ```
 
-> Stars classified later in the alphabet tend to haved lower effective 
+Stars classified later in the alphabet tend to haved lower effective 
 temperatures among stars that have exoplanets orbiting them.
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 
 ggplot(ep, aes(x = st_mass, y = st_teff)) + geom_point(alpha = 0.05) + 
   coord_cartesian(ylim = c(0, 12000), xlim = c(0, 2))
@@ -615,11 +593,11 @@ lm(pl_radj ~ st_teff, data = ep) %>% summary()
 
 ```
 
-> There's correlation between star mass and star effective temperature. I 
+There's correlation between star mass and star effective temperature. I 
 hesitate to call it strong, but we definitely see tightly packed observations
 trending upward linearly.
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 
 ggplot(ep, aes(x = st_optmag, y = st_dist)) + geom_point(alpha = 0.2) + 
   coord_cartesian(ylim = c(0, 2500))
@@ -634,13 +612,13 @@ ggplot(ep, aes(x = st_optmag, y = st_dist)) + geom_point(alpha = 0.2) +
 ```
 
 
-> There appears to be some non-linear relationship between a star's distance from
+There appears to be some non-linear relationship between a star's distance from
 earth and its optical magnitude. I'd guess this is a quadratic relationship 
 because light propagates according to the inverse *square* law. Scaling the
 y-axis by square root smooths out the relation a little bit, but
 it's still not quite linear. 
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 
 ggplot(ep, aes(x = factor(pl_pnum), y = pl_bmassj, group = factor(pl_pnum))) +
   geom_boxplot()
@@ -648,86 +626,68 @@ ggplot(ep, aes(x = factor(pl_pnum), y = pl_bmassj, group = factor(pl_pnum))) +
 
 ```
 
-> As the number of planets in a system increases, the mass of those planets
+As the number of planets in a system increases, the mass of those planets
 tends to decrease.
 
 
 
 # Bivariate Analysis
 
-> **Tip**: As before, summarize what you found in your bivariate explorations
-here. Use the questions below to guide your discussion.
+### Talk about some of the relationships you observed in this part of the 
+### investigation. How did the feature(s) of interest vary with other features in 
+### the dataset?
 
-
-
-### Talk about some of the relationships you observed in this part of the \
-investigation. How did the feature(s) of interest vary with other features in \
-the dataset?
-
-> The relationship between planetary mass and planetary radius, as well as
+The relationship between planetary mass and planetary radius, as well as
 between planetary mass and planetary density is not as positievly correlated as expected. One would expect a strong correlation in both scenarios, but there is
 something going on in mass, radius, and density preventing this. It definitely
 warrants further investigation. Adding additional variables might definitively
 explain this.
 
-> There's a weak negative correlation between star distance from earth and 
+There's a weak negative correlation between star distance from earth and 
 planetary mass. I'd expect this to be explained by bias in different discovery methods. Perhaps the methods that are capable of discovering planets very far
 from earth are biased towards discovering lower mass planets.
 
 ### Did you observe any interesting relationships between the other features \
 (not the main feature(s) of interest)?
 
-> Adding another variable to the analysis is beginning to tell more of a story.
+Adding another variable to the analysis is beginning to tell more of a story.
 The scatter plot comparing planetary density and planetary mass shows what I 
 believe are terrestrial planets hugging the x axis. I believe these planets are
 terrestrial because they have low mass and high density, which is what one would
 expect from a terrestrial planet. Terrestrial planets have low mass due to
 physical restrictions on their radius.
 
-> Most stars in our dataset have about one solar mass. I'm interested to know
+Most stars in our dataset have about one solar mass. I'm interested to know
 if there's something special about stars that have one solar mass to make 
 planets more likely to orbit them, or if this is simply a result of the 
 distribution of all stars' masses.
 
 ### What was the strongest relationship you found?
 
-> The relationship between star optical magnitude and the square root of
+The relationship between star optical magnitude and the square root of
 star distance is the strongest relation I found. I believe this is due to light
 from a star propagating according to the inverse square of a star's distance. 
 
 # Multivariate Plots Section
 
-> **Tip**: Now it's time to put everything together. Based on what you found in
-the bivariate plots section, create a few multivariate plots to investigate
-more complex interactions between variables. Make sure that the plots that you
-create here are justified by the plots you explored in the previous section. If
-you plan on creating any mathematical models, this is the section where you
-will do that.
 
-```{r echo=FALSE, Multivariate_Plots}
-
-```
-
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 
 ggplot(ep, aes(x = st_dist, y = pl_bmassj, color = pl_discmethod)) +
   geom_point(alpha = 0.2) + scale_color_brewer(type='qual', palette = 2)
 
 ```
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 
-m = subset(ep, pl_discmethod == 'Transit' | pl_discmethod == 'Radial Velocity' | 
-           pl_discmethod == 'Microlensing' | pl_discmethod == 'Imaging')
-
-ggplot(m, aes(x = st_dist, y = pl_bmassj, color = pl_discmethod)) +
+ggplot(ep, aes(x = st_dist, y = pl_bmassj, color = pl_discmethod)) +
   geom_point(alpha = 0.2) + scale_color_brewer(type='qual', palette = 2) + 
   coord_cartesian(ylim = c(0, 25))
 
 ```
 
 
-> This plot has some fascinating qualities! Almost every single planet 
+This plot has some fascinating qualities! Almost every single planet 
 discovered more than 3000 light years away was discovered through microlensing!
 Radial velocity seems to be the most common discovery method for relatively 
 close planets (and seems to have no problem discovering high mass planets), 
@@ -736,7 +696,7 @@ but less than 2000 light years away. Planets discovered via transit also seem to
 have lower mass than planets discovered via radial velocity. Planets discovered
 via imaging are generally very near earth, and can have relatively high mass.
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 
 ggplot(ep, aes(x = pl_radj, y = pl_bmassj)) +
   geom_point(size = .5*ep$pl_dens, alpha = 0.5) +
@@ -744,53 +704,50 @@ ggplot(ep, aes(x = pl_radj, y = pl_bmassj)) +
 
 ```
 
-> This plot gives us a better idea of the relationship between planetary radius,
+This plot gives us a better idea of the relationship between planetary radius,
 mass, and density. Density is represented by the size of the points here,
 making it apparent that planets with high density are clustered near 0 Jupiter
 masses and 0 Jupiter radii. This cluster in the bottom left of the plot almost
 certainly represents terrestrial planets.
 
-> We do see an interesting phenomenon around 1 solar mass, where many planets
+We do see an interesting phenomenon around 1 solar mass, where many planets
 with mass greater than 5 Jupiter masses have higher density. These planets
 must have gaseous composition due to their radius and mass, but it's surprising
 to see a gas planet with higher density than the numerous gas giants with much 
 lower density below this phenomenon. What's going on with these planets?
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 
 ggplot(ep, aes(x = pl_radj, y = pl_bmassj, color = factor(pl_pnum))) +
   geom_point(alpha = 0.2) + coord_cartesian(xlim = c(0, 3), ylim =c(0, 30))
 
 ```
-> Planets that are part of a system with only one planet tend to have higher 
+Planets that are part of a system with only one planet tend to have higher 
 radius than those that have multiple planets in their system. Could this mean
 that terrestrial planets (which have lower radius than gaseous planets) are more
 likely to be part of systems with multiple planets?
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 
 ggplot(ep, aes(x = pl_orbsmax, y = pl_bmassj, color = pl_discmethod)) +
   geom_point(alpha = 0.2) + coord_cartesian(xlim = c(0, 7), ylim = c(0, 25))
 
 ```
-> The transit method doesn't discover many planets that are rotating more than 
+The transit method doesn't discover many planets that are rotating more than 
 0.5 AU from their host star. These planets tend to lie on a vertical line around 
 0 AU. Let's investigate the properties of planets discovered by transit in the
 next plot!
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 
 ggplot(trans, aes(x = pl_dens, y = pl_bmassj, color = factor(pl_pnum))) +
          geom_point() + coord_cartesian(xlim = c(0, 15), ylim = c(0, 5))
 
 ```
 
-> I believe we're seeing what astronomers refer to as hot Jupiters in this plot.
-The terrestrial planets hug the x-axis, while the gas giants have higher mass.
-This plot also shows that planets with only one planet in the system tend to 
-have higher mass than those with more than one planet in the system. This lends
-support to the theory that terrestrial planets tend to have more planets in 
-their systems, while gas giants have fewer.
+Planets that have high mass, low density and that are part of systems with
+only one planet are seen on the left side of this plot. Planets with higher 
+density and lower mass hug the x-axis.
 
 # Multivariate Analysis
 
@@ -818,27 +775,79 @@ units), and good aesthetic choices (e.g. color, transparency). After each plot,
 make sure you justify why you chose each plot by describing what it shows.
 
 ### Plot One
-```{r echo=FALSE, Plot_One}
+```{r echo=FALSE, warning=FALSE, message=FALSE, Plot_One}
+
+hist_plot(ep, ep$pl_bmassj, .25) + coord_cartesian(xlim = c(0, 10)) + 
+    labs(x = 'Jupiter masses', y = 'Number of planets', 
+         title = 'Planetary Mass') + 
+  theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, Plot_one}
+
+hist_plot(ep, ep$pl_bmasse, .5) + coord_cartesian(xlim = c(0, 5)) + 
+    labs(x = 'Jupiter masses', y = 'Number of planets', 
+         title = 'Planetary Mass') + 
+  theme(plot.title = element_text(hjust = 0.5))
+
+ep %>% names()
 
 ```
 
 ### Description One
+The first plot shows us planets' distribution of mass on a larger scale (eg we 
+can see very low mass planets and high mass planets in this plot). The second 
+
 
 
 ### Plot Two
-```{r echo=FALSE, Plot_Two}
+```{r echo=FALSE, warning=FALSE, message=FALSE, Plot_Two}
+
+ggplot(ep, aes(x = st_dist, y = pl_bmassj, color = pl_discmethod)) +
+  geom_point(alpha = 0.2) + scale_color_brewer(type='qual', palette = 2) + 
+  coord_cartesian(ylim = c(0, 25)) + labs(x = 'Star distance (light years)', 
+  y = 'Jupiter masses', title = 'Planetary Mass by Star Distance', 
+  color = 'Discovery method') + theme(plot.title = element_text(hjust = 0.5))
 
 ```
 
 ### Description Two
+This plot allows us to see the strengths and limitations of the most common
+discovery methods in regards to planetary mass and distance from earth.
+
+* Radial velocity appears to be biased towards discovering planets near earth 
+and with any mass from 0 to 20 Jupiter masses. 
+* Transit most easily discovers planets between 100 and 1500 light years from
+earth, with lower mass -- below 2.5 Jupiter masses. 
+* Microlensing accounts for almost all planets discovered at a  distance greater
+than 2000 light years away from earth. 
+* Imaging appears to be biased towards planets near earth with high mass. 
 
 
 ### Plot Three
-```{r echo=FALSE, Plot_Three}
+```{r echo=FALSE, warning=FALSE, message=FALSE, Plot_Three}
+
+ggplot(trans, aes(x = pl_dens, y = pl_bmassj, color = factor(pl_pnum))) +
+         geom_point() + coord_cartesian(xlim = c(0, 15), ylim = c(0, 5)) + 
+  labs(x = 'Density (g/cm^3)', y= 'Jupiter masses', title = 'Density by
+       Mass of Planets Discovered via Transit', color = 'Number of planets in system') + 
+  theme(plot.title = element_text(hjust = 0.5))
 
 ```
 
 ### Description Three
+
+I believe we're seeing what astronomers refer to as hot Jupiters in this plot.
+Hot Jupiters are gas giants that orbit very close to their stars. These are 
+represented by the salmon colored data points with low density and high mass.
+This leaves the terrestrial planets hugging the x-axis.
+
+We can also see that planets with only one planet in the system tend to 
+have higher mass than those with more than one planet in the system. This lends
+support to the theory that terrestrial planets tend to have more planets in 
+their systems, while gas giants have fewer.
+
 
 ------
 
@@ -849,5 +858,13 @@ the insights you found. What were some of the struggles that you went through?
 What went well? What was surprising? Make sure you include an insight into
 future work that could be done with the dataset.
 
-> **Tip**: Don't forget to remove this, and the other **Tip** sections before
-saving your final work and knitting the final report!
+The data on exoplanets was accumulated between 1992 and 2018, with most of the 
+planets being discovered after 2008. There are 3736 observations with 142 
+variables. I pared this down to 3696 observations with 17 variables after 
+cleaning. 
+
+The categorical variable of most interest to us is the discovery 
+method of each planet. Each discovery method has different strengths and 
+weaknesses -- the transit method shines in discovery of relatively close 
+planets with moderate mass, while the radial velocity method specializes
+in discovering very close and very massive planets.
