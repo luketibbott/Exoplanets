@@ -122,8 +122,7 @@ hist_plot <- function(df, x, binwidth) {
 }
 
 # Produces a scatter plot using ggplot2.
-# Arguments: df, a dataframe object; x, a variable in df, y a variable in df;
-
+# Arguments: df, a dataframe object; x, a variable in df, y a variable in df
 
 scatter <- function(df, x, y) {
   ggplot(df, aes(x = x, y = y)) + geom_point()
@@ -188,7 +187,7 @@ stars more, making it easier to discover more massive planets with this method?
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 
-hist_plot(ep, ep$pl_bmassj, .5)
+hist_plot(ep, ep$pl_bmassj, .5) + xlab('Jupiter masses')
 
 ```
 
@@ -207,9 +206,9 @@ hist_plot(ep, ep$pl_bmassj, .25) + coord_cartesian(xlim = c(0, 10)) +
 
 ```
 
-The log-10 adjusted graph gives us a better idea of how planetary mass
-is distributed near 0 Jupiter masses. Again, we see a heavily right skewed
-distribution. 
+The log-10 adjusted graph with a smaller x-axis gives us a better idea of how
+planetary mass is distributed near 0 Jupiter masses. Again, we see a heavily
+right skewed distribution. 
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 
@@ -257,71 +256,50 @@ im <- ep %>% subset(pl_discmethod == 'Imaging')
 
 ```
 
-
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 
-hist_plot(trans, trans$pl_bmassj, .3) + xlab('Jupiter Masses')
+ggplot(ep, aes(x = pl_bmassj)) + geom_histogram() +
+  facet_wrap(~ep$pl_discmethod) +
+  coord_cartesian(xlim = c(0, 30)) +
+ggtitle('Planetary mass distribution by discovery method') + 
+theme(plot.title = element_text(hjust = 0.5))
 
 ```
 
-The mass of planets discovered via the transit method is heavily concentrated
+
+
+
+* The mass of planets discovered via the transit method is heavily concentrated
 below 2.5 Jupiter masses, with relatively low variance.
 
-```{r echo=FALSE, warning=FALSE, message=FALSE}
-
-hist_plot(rv, rv$pl_bmassj, .3) + xlab('Jupiter Masses')
-
-```
-
-Planets discovered via the radial velocity method have a distribution very
+* Planets discovered via the radial velocity method have a distribution very
 similar to those discovered via transit.
 
-```{r echo=FALSE, warning=FALSE, message=FALSE}
-
-hist_plot(ml, ml$pl_bmassj, .1) + xlab('Jupiter Masses')
-
-```
-
-We have very few data points for planets discovered via microlensing, but 
+* We have very few data points for planets discovered via microlensing, but 
 this distribution has much higher variance. Most planets discovered via
 microlensing have relatively low mass, but a significant proportion of planets
 discovered via microlensing have more than 2.5 Jupiter masses.
 
-```{r echo=FALSE, warning=FALSE, message=FALSE}
-
-hist_plot(im, im$pl_bmassj, .3) + xlab('Jupiter Masses')
-
-```
-
-We have even less data for planets discovered via imaging, but this 
+* We have even less data for planets discovered via imaging, but this 
 distribution is the only one we've seen that isn't clustered near 0 Jupiter 
 masses. I would guess that it's easier to discover more massive planets via 
 imaging because they are bigger and easier to see. Let's take a look at
-the radius of planets discovered via imaging to confirm that they are bigger:
-
-```{r echo=FALSE, warning=FALSE, message=FALSE}
-hist_plot(im, im$pl_radj, .1) + xlab('Jupiter Radii')
-```
-
-These radii aren't as big as I expected, but let's take a look at the Radial
-Velocity and Transit radii to see how they compare:
-
-```{r echo=FALSE, warning=FALSE, message=FALSE}
-hist_plot(rv, rv$pl_radj, .1) + xlab('Jupiter Radii')
-```
-
+the radius of planets separated by discovery method.
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 
-hist_plot(trans, trans$pl_radj, .1) + xlab('Jupiter Radii')
-
+hist_plot(ep, ep$pl_radj, .1) +
+  labs(x = 'Jupiter radii', title = 'Planetary radius by discovery method') + 
+  facet_wrap(~ep$pl_discmethod) + theme(plot.title = element_text(hjust = 0.5))
 ```
 
-The radii of planets discovered via transit or radial velocity are generally
-below 2 Jupiter radii, whereas the planets discovered via imaging have multiple
-data points greater than 3 radii.
+All discovery methods have distributions almost entirely less than 4 Jupiter
+radii. This is surprising, and seems to suggest that my theory that it's easier
+to discovery planets with larger radii is wrong.
+
 
 ```{r echo=FALSE, num_planets}
+
 ggplot(num_planets, aes(x = factor(pl_pnum))) + geom_bar()
 
 
@@ -334,6 +312,8 @@ themselves to discovering systems with more or less planets in them.
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 
 hist_plot(ep, ep$st_age, .1) + xlab('Star age (billions of years)')
+
+summary(ep$st_age)
 
 ```
 
@@ -467,9 +447,6 @@ discover than smaller planets.
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, Bivariate_Plots}
 
-ggplot(subset(ep, ep$pl_dens <= 60), aes(x = pl_dens, y = pl_bmassj)) + 
-  geom_point()
-
 scatter(ep, ep$pl_dens, ep$pl_bmassj) +
   coord_cartesian(xlim = c(0, 20), ylim = c(0, 10))
 
@@ -477,8 +454,9 @@ scatter(ep, ep$pl_dens, ep$pl_bmassj) +
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 
-ggplot(subset(ep, ep$pl_dens <= 60), aes(x = pl_dens, y = pl_bmassj)) + 
-  geom_point() + coord_cartesian(xlim = c(0, 15), ylim = c(0, 5))
+scatter(ep, ep$pl_dens, ep$pl_bmassj) +
+  coord_cartesian(xlim = c(0, 15), ylim = c(0, 5)) +
+  labs(x = 'Density (g/cm^3)', y = 'Jupiter masses')
 
 ```
 
@@ -492,22 +470,25 @@ planets.
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 
-ggplot(ep, aes(x = pl_radj, y = pl_bmassj)) + geom_point() +
-  coord_cartesian(xlim = c(0, 3), ylim =c(0, 30))
+scatter(ep, ep$pl_radj, ep$pl_bmassj) + 
+  coord_cartesian(xlim = c(0, 3), ylim = c(0, 30)) +
+  labs(x = 'Jupiter radii', y = 'Jupiter masses')
 
 ```
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 
-ggplot(ep, aes(x = pl_radj, y = pl_bmassj)) + geom_point() +
-  coord_cartesian(xlim = c(0, 3), ylim =c(0, 10))
+scatter(ep, ep$pl_radj, ep$pl_bmassj) +
+  coord_cartesian(xlim = c(0, 3), ylim = c(0, 10)) +
+  labs(x = 'Jupiter radii', y = 'Jupiter masses')
 
 ```
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 
-ggplot(ep, aes(x = pl_orbsmax, y = pl_bmassj)) + geom_point() +
-  coord_cartesian(xlim = c(0, 8), ylim = c(0, 10))
+scatter(ep, ep$pl_orbsmax, ep$pl_bmassj) + 
+  coord_cartesian(xlim = c(0, 8), ylim = c(0, 10)) +
+  labs(x = 'Orbital distance (Astronomical Units)', y = 'Jupiter masses')
 
 ```
 
@@ -519,20 +500,18 @@ hot Jupiters).
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 
-ggplot(ep, aes(x = st_dist, y = pl_bmassj)) + geom_point()
+scatter(ep, ep$st_dist, ep$pl_bmassj) +
+labs(x = 'Star distance(light years)' , y = 'Jupiter masses') +
+  coord_cartesian(ylim = c(0, 30))
 
 ```
 
 There appears to be a weak negative correlation between star distance and 
 planet mass. This is somewhat counterintuitive because I would expect higher
 mass planets to be easier to discover than low mass planets particularly
-when the host star is far away.
+when the host star is far away. Perhaps this is explained by limitations in 
+planetary discovery methods at different distances.
 
-```{r echo=FALSE, warning=FALSE, message=FALSE}
-
-ggplot(ep, aes(x = st_dist, y = pl_bmassj)) + geom_point()
-
-```
 
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
@@ -552,15 +531,19 @@ quartile at or less than 250 light years.
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 
-ggplot(ep, aes(x = st_mass, y = pl_bmassj)) + geom_point() +
-  coord_cartesian(xlim = c(0, 15), ylim = c(0, 30))
+scatter(ep, ep$st_mass, ep$pl_bmassj) + 
+  coord_cartesian(xlim = c(0, 15), ylim = c(0, 30)) + 
+  labs(x = 'Stellar mass in solar masses',
+       y = 'Planetary mass in Jupiter masses') 
 
 ```
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 
-ggplot(ep, aes(x = st_mass, y = pl_bmassj)) + geom_point(alpha=0.5) +
-  coord_cartesian(xlim = c(0, 2), ylim = c(0, 5))
+scatter(ep, ep$st_mass, ep$pl_bmassj) + 
+  coord_cartesian(xlim = c(0, 2), ylim = c(0, 5)) +
+  labs(x = 'Stellar mass in solar masses',
+       y = 'Planetary mass in Jupiter masses')
 
 ```
 
@@ -578,6 +561,8 @@ There doesn't appear to be any significant difference in the mass of a star
 when compared to the number of planets orbiting a star.
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
+# Subset the dataframe to ignore stellar classifications with very little or
+# null data
 
 ggplot(subset(ep, ep$st_spster != 'W' & ep$st_spster != 's' &
                 ep$st_spster != 'L' & ep$st_spster != 'B' & ep$st_spster != ''), 
@@ -587,20 +572,22 @@ ggplot(subset(ep, ep$st_spster != 'W' & ep$st_spster != 's' &
 ```
 
 Stars classified later in the alphabet tend to haved lower effective 
-temperatures among stars that have exoplanets orbiting them.
+temperatures among stars that have exoplanets orbiting them. This likely
+has something to do with how stars are classified.
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 
+# Set the alpha to 0.05 to show where the data is overplotted
+
 ggplot(ep, aes(x = st_mass, y = st_teff)) + geom_point(alpha = 0.05) + 
   coord_cartesian(ylim = c(0, 12000), xlim = c(0, 2))
-
-lm(pl_radj ~ st_teff, data = ep) %>% summary()
 
 ```
 
 There's correlation between star mass and star effective temperature. I 
 hesitate to call it strong, but we definitely see tightly packed observations
-trending upward linearly.
+trending upward linearly. This plot is reminiscent of a sigmoid curve -- I'd 
+be interested in the physics behind this.
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 
@@ -612,7 +599,7 @@ ggplot(ep, aes(x = st_optmag, y = st_dist)) + geom_point(alpha = 0.2) +
 ```{r}
 
 ggplot(ep, aes(x = st_optmag, y = st_dist)) + geom_point(alpha = 0.2) + 
-  coord_cartesian(ylim = c(0, 2500)) + scale_y_sqrt()
+ coord_cartesian(ylim = c(0, 2500)) + scale_y_sqrt()
 
 ```
 
@@ -758,11 +745,39 @@ density and lower mass hug the x-axis.
 
 
 
-### Talk about some of the relationships you observed in this part of the \
-investigation. Were there features that strengthened each other in terms of \
-looking at your feature(s) of interest?
+### Talk about some of the relationships you observed in this part of the 
+### investigation. Were there features that strengthened each other in terms of \
+### looking at your feature(s) of interest?
+
+Radius, mass, and density generally behaved as predicted. As radius increases,
+so does mass, while density decreases. As mass increases, density also increase,
+and so does radius. 
+
+Among planets discovered via the transit method, one group of planets has
+low density, high mass, and only one planet in their system. The other (smaller)
+group of planets has higher density, much lower mass, and more planets in their
+system. I believe these two groups represent hot Jupiters and terrestrial
+planets respectively.
+
+Planets discovered via transit tend to be a moderate distance from earth (100
+to 2000 light years away), have relatively low mass, and orbit close to their 
+star.
+
+Planets discovered via radial velocity tend to be close to earth, and have
+very high mass. 
+
+Planets discovered via microlensing tend to be very far from earth
+(> 2000 light years), and have low mass.
+
+Planets discovered via imaging tend to be very close to earth, and have low
+mass.
 
 ### Were there any interesting or surprising interactions between features?
+
+I'm surprised different discovery methods yield such distinct types of planets.
+There is some overlap between radial velocity and imaging, but the other 
+discovery methods have clear strengths and weaknesses in their ability to 
+discovery planets. 
 
 ### OPTIONAL: Did you create any models with your dataset? Discuss the \
 strengths and limitations of your model.
