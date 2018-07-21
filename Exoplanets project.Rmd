@@ -888,3 +888,26 @@ method of each planet. Each discovery method has different strengths and
 weaknesses -- the transit method shines in discovery of relatively close 
 planets with moderate mass, while the radial velocity method specializes
 in discovering very close and very massive planets.
+
+The study and discovery of exoplanets is an extremely exciting field right now!
+We're in the early stages of this field, and have very few data points compared
+to how many planets likely exist in our galaxy, let alone the universe. 
+Scientific methods may be able to approximate that average characteristics of
+planets, but our current dataset is not enough to make large generalizations of
+the distribution of any features of exoplanets.
+
+For example, we could not say that there are more planets with high mass near
+earth than far from earth, despite our data clearly showing that trend. Our 
+methods for discovering planets near earth appear to be somewhat biased towards
+discovering high mass planets, and our methods for discovering planets far from
+earth tend not to be biased towards discovering high mass planets. 
+
+This dataset suffers from lots of missing null values due to the data being
+from several different sources (eg different exoplanet discovery missions). I 
+left all the nulls in tact and went ahead with my analysis. This was a constant
+limitation in this exploration.
+
+One thing I'd love to do in the future with this dataset is to implement an 
+algorithm that predicts what method a planet is likely to be discovered by
+given a few of the planets hypothetical parameters. I believe this could be 
+implemented by a multinomial logistic regression model.
