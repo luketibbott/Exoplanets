@@ -139,11 +139,15 @@ scatter <- function(df, x, y) {
 # Univariate Plots Section
 
 ```{r echo=FALSE, Summarize_dataframe}
+
 summary(ep)
+
 ```
 
 ```{r echo=FALSE, structure_of_dataframe}
+
 str(ep)
+
 ```
 
 This dataset has 17 variables and about 3700 observations.
