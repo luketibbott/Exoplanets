@@ -261,8 +261,6 @@ ggplot(ep, aes(x = pl_bmassj)) + geom_histogram() +
 
 ```
 
-
-
 * Note that all y axes are scaled by log 10 to make the histograms for the 
 microlensing and imaging discovery methods visible.
 
@@ -317,8 +315,6 @@ summary(ep$st_age)
 
 ```
 
-
-
 The distribution of parent stars is certainly unimodal although perhaps not
 quite normal, with a clear peak a bit older than 4 billion years old, and a
 higher concentration of stars between 0 and 4.5 billion years old than stars 
@@ -338,7 +334,6 @@ stars, but most are orbiting stars whose age lies somewhere in between.
 hist_plot(ep, ep$st_mass, 1) + xlab('Solar masses')
 
 ```
-
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 
@@ -377,10 +372,8 @@ hist_plot(ep, ep$st_teff, 100) + xlab('Effective temperature (K)')
 
 ```
 
-
 Effective temperature of stars in our dataset form an approximately normal
 distribution around 6000 K, with a slight skew to the left.
-
 
 # Univariate Analysis
 
@@ -459,6 +452,7 @@ in our uncleaned dataframe. I also dropped all data points that weren't
 collected via the transit, radial velocity, imaging, or microlensing discovery
 methods because there was very little data for these discovery methods.
 
+------------
 
 # Bivariate Plots Section
 

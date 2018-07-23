@@ -272,6 +272,7 @@ investigation into your feature(s) of interest?</h3>
 form of the data? If so, why did you do this?</h3>
 <p>I grabbed the first character from the spectral type column. This is because many stars in the dataset were described too precisely for our needs, ie a star might have been listed as type ‘K-IIIbv’ which is a very narrow sub-classification of a type K star. All we care about is the first letter in this column.</p>
 <p>I dropped over 100 columns from the dataframe, and created a new dataframe that lists the number of planets in a system without repeating this data as it is in our uncleaned dataframe. I also dropped all data points that weren’t collected via the transit, radial velocity, imaging, or microlensing discovery methods because there was very little data for these discovery methods.</p>
+<hr />
 </div>
 </div>
 <div id="bivariate-plots-section" class="section level1">
